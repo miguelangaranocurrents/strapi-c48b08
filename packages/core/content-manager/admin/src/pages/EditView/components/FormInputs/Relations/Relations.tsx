@@ -625,6 +625,13 @@ const RelationsInput = ({
        *
        */
       onChange(relation);
+
+      /**
+       * The combobox text is cleared once a relation is selected (see `RelationModalWithContext`),
+       * so reset the search term as well. Otherwise the next time the dropdown opens it would
+       * still show the results of the previous search instead of the remaining relations.
+       */
+      setSearchParams((s) => (s._q === '' && s.page === 1 ? s : { ...s, _q: '', page: 1 }));
     },
     [data, formatMessage, onChange, toggleNotification]
   );
@@ -797,8 +804,15 @@ const RelationModalWithContext = ({
           }
           hasMoreItems={hasNextPage}
           loading={isLoadingSearchRelations || isLoadingPermissions}
-          onOpenChange={() => {
-            handleSearch(textValue ?? '');
+          onOpenChange={(isOpen) => {
+            /**
+             * Only refresh the search when opening: on close (e.g. right after selecting an
+             * option) `textValue` still holds the previous search term from this render and
+             * would override the search reset done in `handleChange`.
+             */
+            if (isOpen) {
+              handleSearch(textValue ?? '');
+            }
           }}
           noOptionsMessage={() =>
             formatMessage({
